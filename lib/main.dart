@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:developer';
+import 'dart:developer' as log_print;
+import 'dart:math' show cos, sqrt, asin;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,7 @@ Future<void> firebaseConnect() async {
       storageBucket: "loyalty-app-ec079.appspot.com",
     ));
   } catch (e) {
-    log('Firebase Catch --- ${e.toString()}');
+    log_print.log('Firebase Catch --- ${e.toString()}');
   }
 }
 
@@ -262,7 +263,7 @@ class MapScreenState extends State<MapScreen> {
         StreamLocationService.onLocationChanged?.listen(
       (position) async {
         print('Position ---> ${position}');
-        log('Position ---> ${position}');
+        log_print.log('Position ---> ${position}');
         await FirestoreService.updateUserLocation(
           'sQkWMX9usjO8HbI2VQCF',
           //Hardcoded uid but this is the uid of the connected user when using authentification service
@@ -287,7 +288,7 @@ class MapScreenState extends State<MapScreen> {
         storageBucket: "loyalty-app-ec079.appspot.com",
       ));
     } catch (e) {
-      log('Firebase Catch --- ${e.toString()}');
+      log_print.log('Firebase Catch --- ${e.toString()}');
     }
   }
 
@@ -394,6 +395,7 @@ class MapScreenState extends State<MapScreen> {
 
   Future<int> buildwidget(List<User>? data) async {
     List<LatLng> polylineCoordinates = [];
+    double totalDistance = 0.0;
     // markers.clear();
     // polylines.clear();
 
@@ -405,8 +407,9 @@ class MapScreenState extends State<MapScreen> {
         // polylineCoordinates.add(LatLng(data![i].location!.lat,
         //     data![i].location!.lng));
 
+        //Create PolyLine Route
         PolylineResult data1 = await polylinePoints.getRouteBetweenCoordinates(
-            "AIzaSyCKM6nu9hXYksgFuz1flo2zQtPRC_lw7NM",
+            "AIzaSyBwgA1lUXJCuACf_9-Zy-fuYULV1W8HEqM",
             PointLatLng(data[i].location!.lat, data[i].location!.lng),
             (data.length-1) == i
                 ? PointLatLng(data[i].location!.lat, data[i].location!.lng)
@@ -417,7 +420,6 @@ class MapScreenState extends State<MapScreen> {
         data1.points.forEach((PointLatLng point) {
           polylineCoordinates.add(LatLng(point.latitude, point.longitude));
         });
-        // print("Polylies -- > ${polylineCoordinates}");
 
         Polyline polyline = Polyline(
             polylineId: id,
@@ -429,12 +431,30 @@ class MapScreenState extends State<MapScreen> {
             consumeTapEvents: false,
             points: polylineCoordinates);
         polylines[id] = polyline;
-        // log('polylines --- > ${polylines}');
+
+        //Count Distance
+        totalDistance += _coordinateDistance(
+          0 == i ? data[i].location?.lat : data[i - 1].location?.lat,
+          0 == i ? data[i].location?.lng : data[i - 1].location?.lng,
+          data[i].location?.lat,
+          data[i].location?.lng,
+        );
+
+        //Time Calculate
+
+
+        // Location loc1 = Location(lat: 0 == i ? data[i].location!.lat : data[i - 1].location!.lat, lng: 0 == i ? data[i].location!.lng : data[i - 1].location!.lng);
+        // Location loc2 = Location(lat: data[i].location!.lat,lng: data[i].location!.lng,);
+        // double distance = loc1.distanceTo(loc2);
+        //
+        // int speed=30;
+        // float time = distance/speed;
+        log_print.log('distanceInMeters --- > ${totalDistance}');
         markers.add(
           Marker(
             draggable: true,
             flat: false,
-            infoWindow: InfoWindow(title: data![i].name),
+            infoWindow: InfoWindow(title: data[i].name, snippet: totalDistance.toStringAsFixed(2)),
             markerId: MarkerId('${user.name} position $i'),
             icon: user.name == '${data![0].name}'
                 ? BitmapDescriptor.defaultMarkerWithHue(
@@ -451,6 +471,15 @@ class MapScreenState extends State<MapScreen> {
       }
     }
     return 1;
+  }
+
+  double _coordinateDistance(lat1, lon1, lat2, lon2) {
+    var p = 0.017453292519943295;
+    var c = cos;
+    var a = 0.5 -
+        c((lat2 - lat1) * p) / 2 +
+        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
   }
 }
 
