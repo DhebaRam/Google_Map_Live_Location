@@ -47,6 +47,13 @@ dependencies:
   flutter_markdown: ^0.6.19
   flutter_polyline_points: ^2.0.0
 
+  #Google Event
+  syncfusion_flutter_calendar: ^20.3.60
+  intl: ^0.19.0
+  google_sign_in: ^6.1.5
+  googleapis_auth: ^1.4.0
+  googleapis: ^13.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
