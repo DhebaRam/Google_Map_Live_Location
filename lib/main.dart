@@ -257,10 +257,25 @@ class _MyHomePageState extends State<MyHomePage> {
   );
 
   GoogleSignInAccount? _currentUser;
+  int selectIndex = 0;
+  late CalendarView selectCalendar;
+
+  List calendarType = [
+    CalendarView.day,
+    CalendarView.week,
+    CalendarView.month,
+    CalendarView.timelineDay,
+    CalendarView.workWeek,
+    CalendarView.timelineWeek,
+    CalendarView.timelineWorkWeek,
+    CalendarView.timelineMonth,
+    CalendarView.schedule,
+  ];
 
   @override
   void initState() {
     super.initState();
+    selectCalendar = CalendarView.day;
     _controller = CalendarController();
     _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
       setState(() {
@@ -273,14 +288,16 @@ class _MyHomePageState extends State<MyHomePage> {
     _googleSignIn.signInSilently();
   }
 
-  Stream<List<GoogleAPI.Event>> getGoogleEventsData() async*{
+  Stream<List<GoogleAPI.Event>> getGoogleEventsData() async* {
     final List<GoogleAPI.Event> appointments = <GoogleAPI.Event>[];
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       log('googleUser ---> ${googleUser?.email}');
-      final GoogleAPIClient httpClient = GoogleAPIClient(await googleUser!.authHeaders);
+      final GoogleAPIClient httpClient =
+          GoogleAPIClient(await googleUser!.authHeaders);
 
-      final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+      final GoogleAPI.CalendarApi calendarApi =
+          GoogleAPI.CalendarApi(httpClient);
       final GoogleAPI.Events calEvents = await calendarApi.events.list(
         "primary",
       );
@@ -304,98 +321,773 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    print('calendarType[selectIndex] ---> ${calendarType[selectIndex]}');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Event Calendar'),
+        actions: [
+          Text('${calendarType[selectIndex]}'),
+          IconButton(
+              onPressed: () {
+                log('Event ----- $selectIndex  ${selectIndex > calendarType.length}  ${calendarType.length}');
+                if ((selectIndex + 1) < calendarType.length) {
+                  log('Event ----- True');
+                  selectIndex += 1;
+                } else {
+                  log('Event ----- False');
+                  selectIndex = 0;
+                }
+                _controller = CalendarController();
+                setState(() {});
+              },
+              icon: const Icon(Icons.calendar_month_rounded,
+                  color: Colors.blue, size: 30))
+        ],
       ),
-      body: StreamBuilder(
-        stream: getGoogleEventsData(),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          return Stack(
-            children: [
-              SfCalendar(
-                onTap: (CalendarTapDetails details) async {
-                  // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+      body: SizedBox.expand(
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.day,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          SfCalendar(
+                            onTap: (CalendarTapDetails details) async {
+                              // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
 
-                  for (int i = 0; i < details.appointments!.length; i++) {
-                    final GoogleAPI.Event event = details.appointments![i];
-                    log('Cal Event ---> ${event.description} .. ${event.status}');
+                              for (int i = 0;
+                              i < details.appointments!.length;
+                              i++) {
+                                final GoogleAPI.Event event =
+                                details.appointments![i];
+                                log('Cal Event ---> ${event.description} .. ${event.status}');
 
-                      final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                      final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
-                    await calendarApi.events.delete('primary', event.id.toString());
-                    setState(() {});
-                  }
+                                final GoogleAPIClient httpClient =
+                                GoogleAPIClient(
+                                    await _currentUser!.authHeaders);
+                                final GoogleAPI.CalendarApi calendarApi =
+                                GoogleAPI.CalendarApi(httpClient);
+                                await calendarApi.events
+                                    .delete('primary', event.id.toString());
+                                setState(() {});
+                              }
 
-                  // try {
-                  //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                  //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
-                  //   // Delete the event.
-                  //   await calendarApi.events.delete('primary', details..resource.id);
-                  //   print('Event deleted successfully');
-                  // } catch (e) {
-                  //   print('Error deleting event: $e');
-                  // } finally {
-                  //   // Close the client to release resources.
-                  //   client.close();
-                  // }
+                              // try {
+                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   // Delete the event.
+                              //   await calendarApi.events.delete('primary', details..resource.id);
+                              //   print('Event deleted successfully');
+                              // } catch (e) {
+                              //   print('Error deleting event: $e');
+                              // } finally {
+                              //   // Close the client to release resources.
+                              //   client.close();
+                              // }
 
+                              if (details.targetElement ==
+                                  CalendarElement.appointment) {
+                                // An event is tapped
+                                print(
+                                    'Event tapped: ${details.appointments![0].subject}');
+                                // You can perform actions here when an event is tapped
+                              }
+                            },
+                            controller: _controller,
+                            onViewChanged: (onViewChanged) {},
+                            view: CalendarView.day,
+                            initialDisplayDate: DateTime.now(),
+                            //(2024, 1, 15, 9, 0, 0),
+                            dataSource: GoogleDataSource(events: snapshot.data),
+                            monthViewSettings: const MonthViewSettings(
+                                appointmentDisplayMode:
+                                MonthAppointmentDisplayMode.appointment),
+                            allowAppointmentResize: true,
+                            showDatePickerButton: false,
+                            showWeekNumber: true,
+                            showNavigationArrow: true,
+                            showCurrentTimeIndicator: true,
+                            allowViewNavigation: false,
+                            allowDragAndDrop: true,
+                          ),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                )),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.week,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          SfCalendar(
+                            onTap: (CalendarTapDetails details) async {
+                              // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+                              if (details.appointments != null &&
+                                  details.appointments!.isNotEmpty) {
+                                for (int i = 0;
+                                i < details.appointments!.length;
+                                i++) {
+                                  final GoogleAPI.Event event =
+                                  details.appointments![i];
+                                  log('Cal Event ---> ${event.description} .. ${event.status}');
 
-                  if (details.targetElement == CalendarElement.appointment) {
-                    // An event is tapped
-                    print('Event tapped: ${details.appointments![0].subject}');
-                    // You can perform actions here when an event is tapped
-                  }
-                },
-                controller: _controller,
-                onViewChanged: (onViewChanged){
+                                  final GoogleAPIClient httpClient =
+                                  GoogleAPIClient(
+                                      await _currentUser!.authHeaders);
+                                  final GoogleAPI.CalendarApi calendarApi =
+                                  GoogleAPI.CalendarApi(httpClient);
+                                  await calendarApi.events
+                                      .delete('primary', event.id.toString());
+                                  setState(() {});
+                                }
+                              }
 
-                },
-                view: CalendarView.schedule,
-                initialDisplayDate: DateTime.now(),
-                //(2024, 1, 15, 9, 0, 0),
-                dataSource: GoogleDataSource(events: snapshot.data),
-                monthViewSettings: const MonthViewSettings(
-                    appointmentDisplayMode:
-                        MonthAppointmentDisplayMode.appointment),
-                allowAppointmentResize: true,
-                showDatePickerButton: false,
-                showWeekNumber: true,
-                showNavigationArrow: true,
-                showCurrentTimeIndicator: true,
-                allowViewNavigation: false,
-                allowDragAndDrop: true,
-              ),
-              snapshot.data != null
-                  ? Container()
-                  : const Center(
-                      child: CircularProgressIndicator(),
-                    )
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () async{
+                              // try {
+                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   // Delete the event.
+                              //   await calendarApi.events.delete('primary', details..resource.id);
+                              //   print('Event deleted successfully');
+                              // } catch (e) {
+                              //   print('Error deleting event: $e');
+                              // } finally {
+                              //   // Close the client to release resources.
+                              //   client.close();
+                              // }
 
-        final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-        final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
-        var event = GoogleAPI.Event()
-          ..summary = 'Event Summary New '
-          ..description = 'Event Description New'
-          ..start = GoogleAPI.EventDateTime(dateTime: DateTime.now().subtract(const Duration(days: 1)), timeZone: 'GMT')
-          // ..dateTime = DateTime.now().add(Duration(days: 1))
-          // ..timeZone = 'GMT'
-          ..end = GoogleAPI.EventDateTime(dateTime: DateTime.now().add(const Duration(days: 1, hours: 1)), timeZone: 'GMT')
-          // ..dateTime = DateTime.now().add(Duration(days: 1, hours: 1))
-          // ..timeZone = 'GMT'
-        ;
+                              if (details.targetElement ==
+                                  CalendarElement.appointment) {
+                                // An event is tapped
+                                print(
+                                    'Event tapped: ${details.appointments![0].subject}');
+                                // You can perform actions here when an event is tapped
+                              }
+                            },
+                            controller: _controller,
+                            onViewChanged: (onViewChanged) {},
+                            view: CalendarView.week,
+                            initialDisplayDate: DateTime.now(),
+                            //(2024, 1, 15, 9, 0, 0),
+                            dataSource: GoogleDataSource(events: snapshot.data),
+                            monthViewSettings: const MonthViewSettings(
+                                appointmentDisplayMode:
+                                MonthAppointmentDisplayMode.appointment),
+                            allowAppointmentResize: true,
+                            showDatePickerButton: false,
+                            showWeekNumber: true,
+                            showNavigationArrow: true,
+                            showCurrentTimeIndicator: true,
+                            allowViewNavigation: false,
+                            allowDragAndDrop: true,
+                          ),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                )),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.month,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          SfCalendar(
+                            onTap: (CalendarTapDetails details) async {
+                              // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
 
-        var calendarId = 'primary'; // Use 'primary' for the user's primary calendar
-        final status = await calendarApi.events.insert(event, calendarId);
-        setState(() {});
-        print('Add Event Status --> ${status.description}');
+                              for (int i = 0;
+                              i < details.appointments!.length;
+                              i++) {
+                                final GoogleAPI.Event event =
+                                details.appointments![i];
+                                log('Cal Event ---> ${event.description} .. ${event.status}');
 
-      }, label: const Text('Add Event', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20))),
+                                final GoogleAPIClient httpClient =
+                                GoogleAPIClient(
+                                    await _currentUser!.authHeaders);
+                                final GoogleAPI.CalendarApi calendarApi =
+                                GoogleAPI.CalendarApi(httpClient);
+                                await calendarApi.events
+                                    .delete('primary', event.id.toString());
+                                setState(() {});
+                              }
+
+                              // try {
+                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   // Delete the event.
+                              //   await calendarApi.events.delete('primary', details..resource.id);
+                              //   print('Event deleted successfully');
+                              // } catch (e) {
+                              //   print('Error deleting event: $e');
+                              // } finally {
+                              //   // Close the client to release resources.
+                              //   client.close();
+                              // }
+
+                              if (details.targetElement ==
+                                  CalendarElement.appointment) {
+                                // An event is tapped
+                                print(
+                                    'Event tapped: ${details.appointments![0].subject}');
+                                // You can perform actions here when an event is tapped
+                              }
+                            },
+                            controller: _controller,
+                            onViewChanged: (onViewChanged) {},
+                            view: CalendarView.month,
+                            initialDisplayDate: DateTime.now(),
+                            //(2024, 1, 15, 9, 0, 0),
+                            dataSource: GoogleDataSource(events: snapshot.data),
+                            monthViewSettings: const MonthViewSettings(
+                                appointmentDisplayMode:
+                                MonthAppointmentDisplayMode.appointment),
+                            allowAppointmentResize: true,
+                            showDatePickerButton: false,
+                            showWeekNumber: true,
+                            showNavigationArrow: true,
+                            showCurrentTimeIndicator: true,
+                            allowViewNavigation: false,
+                            allowDragAndDrop: true,
+                          ),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                )),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.workWeek,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          SfCalendar(
+                            onTap: (CalendarTapDetails details) async {
+                              // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+
+                              for (int i = 0;
+                              i < details.appointments!.length;
+                              i++) {
+                                final GoogleAPI.Event event =
+                                details.appointments![i];
+                                log('Cal Event ---> ${event.description} .. ${event.status}');
+
+                                final GoogleAPIClient httpClient =
+                                GoogleAPIClient(
+                                    await _currentUser!.authHeaders);
+                                final GoogleAPI.CalendarApi calendarApi =
+                                GoogleAPI.CalendarApi(httpClient);
+                                await calendarApi.events
+                                    .delete('primary', event.id.toString());
+                                setState(() {});
+                              }
+
+                              // try {
+                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   // Delete the event.
+                              //   await calendarApi.events.delete('primary', details..resource.id);
+                              //   print('Event deleted successfully');
+                              // } catch (e) {
+                              //   print('Error deleting event: $e');
+                              // } finally {
+                              //   // Close the client to release resources.
+                              //   client.close();
+                              // }
+
+                              if (details.targetElement ==
+                                  CalendarElement.appointment) {
+                                // An event is tapped
+                                print(
+                                    'Event tapped: ${details.appointments![0].subject}');
+                                // You can perform actions here when an event is tapped
+                              }
+                            },
+                            controller: _controller,
+                            onViewChanged: (onViewChanged) {},
+                            view: CalendarView.workWeek,
+                            initialDisplayDate: DateTime.now(),
+                            //(2024, 1, 15, 9, 0, 0),
+                            dataSource: GoogleDataSource(events: snapshot.data),
+                            monthViewSettings: const MonthViewSettings(
+                                appointmentDisplayMode:
+                                MonthAppointmentDisplayMode.appointment),
+                            allowAppointmentResize: true,
+                            showDatePickerButton: false,
+                            showWeekNumber: true,
+                            showNavigationArrow: true,
+                            showCurrentTimeIndicator: true,
+                            allowViewNavigation: false,
+                            allowDragAndDrop: true,
+                          ),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  ))),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.timelineDay,
+                child: Expanded(child: StreamBuilder(
+                  stream: getGoogleEventsData(),
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    return Stack(
+                      children: [
+                        SfCalendar(
+                          onTap: (CalendarTapDetails details) async {
+                            // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+                            if (details.appointments != null &&
+                                details.appointments!.isNotEmpty) {
+                              for (int i = 0;
+                              i < details.appointments!.length;
+                              i++) {
+                                final GoogleAPI.Event event =
+                                details.appointments![i];
+                                log('Cal Event ---> ${event.description} .. ${event.status}');
+
+                                final GoogleAPIClient httpClient =
+                                GoogleAPIClient(
+                                    await _currentUser!.authHeaders);
+                                final GoogleAPI.CalendarApi calendarApi =
+                                GoogleAPI.CalendarApi(httpClient);
+                                await calendarApi.events
+                                    .delete('primary', event.id.toString());
+                                setState(() {});
+                              }
+                            }
+
+                            // try {
+                            //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                            //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                            //   // Delete the event.
+                            //   await calendarApi.events.delete('primary', details..resource.id);
+                            //   print('Event deleted successfully');
+                            // } catch (e) {
+                            //   print('Error deleting event: $e');
+                            // } finally {
+                            //   // Close the client to release resources.
+                            //   client.close();
+                            // }
+
+                            if (details.targetElement ==
+                                CalendarElement.appointment) {
+                              // An event is tapped
+                              print(
+                                  'Event tapped: ${details.appointments![0].subject}');
+                              // You can perform actions here when an event is tapped
+                            }
+                          },
+                          controller: _controller,
+                          onViewChanged: (onViewChanged) {},
+                          view: CalendarView.timelineDay,
+                          initialDisplayDate: DateTime.now(),
+                          //(2024, 1, 15, 9, 0, 0),
+                          dataSource: GoogleDataSource(events: snapshot.data),
+                          monthViewSettings: const MonthViewSettings(
+                              appointmentDisplayMode:
+                              MonthAppointmentDisplayMode.appointment),
+                          allowAppointmentResize: true,
+                          showDatePickerButton: false,
+                          showWeekNumber: true,
+                          showNavigationArrow: true,
+                          showCurrentTimeIndicator: true,
+                          allowViewNavigation: false,
+                          allowDragAndDrop: true,
+                        ),
+                        snapshot.data != null
+                            ? Container()
+                            : const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ],
+                    );
+                  },
+                ))),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.timelineWeek,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          SfCalendar(
+                            onTap: (CalendarTapDetails details) async {
+                              // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+
+                              for (int i = 0;
+                              i < details.appointments!.length;
+                              i++) {
+                                final GoogleAPI.Event event =
+                                details.appointments![i];
+                                log('Cal Event ---> ${event.description} .. ${event.status}');
+
+                                final GoogleAPIClient httpClient =
+                                GoogleAPIClient(
+                                    await _currentUser!.authHeaders);
+                                final GoogleAPI.CalendarApi calendarApi =
+                                GoogleAPI.CalendarApi(httpClient);
+                                await calendarApi.events
+                                    .delete('primary', event.id.toString());
+                                setState(() {});
+                              }
+
+                              // try {
+                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   // Delete the event.
+                              //   await calendarApi.events.delete('primary', details..resource.id);
+                              //   print('Event deleted successfully');
+                              // } catch (e) {
+                              //   print('Error deleting event: $e');
+                              // } finally {
+                              //   // Close the client to release resources.
+                              //   client.close();
+                              // }
+
+                              if (details.targetElement ==
+                                  CalendarElement.appointment) {
+                                // An event is tapped
+                                print(
+                                    'Event tapped: ${details.appointments![0].subject}');
+                                // You can perform actions here when an event is tapped
+                              }
+                            },
+                            controller: _controller,
+                            onViewChanged: (onViewChanged) {},
+                            view: CalendarView.timelineWeek,
+                            initialDisplayDate: DateTime.now(),
+                            //(2024, 1, 15, 9, 0, 0),
+                            dataSource:
+                            GoogleDataSource(events: snapshot.data),
+                            monthViewSettings: const MonthViewSettings(
+                                appointmentDisplayMode:
+                                MonthAppointmentDisplayMode.appointment),
+                            allowAppointmentResize: true,
+                            showDatePickerButton: false,
+                            showWeekNumber: true,
+                            showNavigationArrow: true,
+                            showCurrentTimeIndicator: true,
+                            allowViewNavigation: false,
+                            allowDragAndDrop: true,
+                          ),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                )),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.timelineMonth,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          SfCalendar(
+                            onTap: (CalendarTapDetails details) async {
+                              // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+                              if (details.appointments != null &&
+                                  details.appointments!.isNotEmpty) {
+                                for (int i = 0;
+                                i < details.appointments!.length;
+                                i++) {
+                                  final GoogleAPI.Event event =
+                                  details.appointments![i];
+                                  log('Cal Event ---> ${event.description} .. ${event.status}');
+
+                                  final GoogleAPIClient httpClient =
+                                  GoogleAPIClient(
+                                      await _currentUser!.authHeaders);
+                                  final GoogleAPI.CalendarApi calendarApi =
+                                  GoogleAPI.CalendarApi(httpClient);
+                                  await calendarApi.events
+                                      .delete('primary', event.id.toString());
+                                  setState(() {});
+                                }
+                              }
+
+                              // try {
+                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   // Delete the event.
+                              //   await calendarApi.events.delete('primary', details..resource.id);
+                              //   print('Event deleted successfully');
+                              // } catch (e) {
+                              //   print('Error deleting event: $e');
+                              // } finally {
+                              //   // Close the client to release resources.
+                              //   client.close();
+                              // }
+
+                              if (details.targetElement ==
+                                  CalendarElement.appointment) {
+                                // An event is tapped
+                                print(
+                                    'Event tapped: ${details.appointments![0].subject}');
+                                // You can perform actions here when an event is tapped
+                              }
+                            },
+                            controller: _controller,
+                            onViewChanged: (onViewChanged) {},
+                            view: CalendarView.timelineMonth,
+                            initialDisplayDate: DateTime.now(),
+                            //(2024, 1, 15, 9, 0, 0),
+                            dataSource:
+                            GoogleDataSource(events: snapshot.data),
+                            monthViewSettings: const MonthViewSettings(
+                                appointmentDisplayMode:
+                                MonthAppointmentDisplayMode.appointment),
+                            allowAppointmentResize: true,
+                            showDatePickerButton: false,
+                            showWeekNumber: true,
+                            showNavigationArrow: true,
+                            showCurrentTimeIndicator: true,
+                            allowViewNavigation: false,
+                            allowDragAndDrop: true,
+                          ),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                )),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.timelineWorkWeek,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          Visibility(
+                              visible: calendarType[selectIndex] ==
+                                  CalendarView.timelineWorkWeek,
+                              child: SfCalendar(
+                                onTap: (CalendarTapDetails details) async {
+                                  // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+                                  if (details.appointments != null &&
+                                      details.appointments!.isNotEmpty) {
+                                    for (int i = 0;
+                                    i < details.appointments!.length;
+                                    i++) {
+                                      final GoogleAPI.Event event =
+                                      details.appointments![i];
+                                      log('Cal Event ---> ${event.description} .. ${event.status}');
+
+                                      final GoogleAPIClient httpClient =
+                                      GoogleAPIClient(
+                                          await _currentUser!.authHeaders);
+                                      final GoogleAPI.CalendarApi calendarApi =
+                                      GoogleAPI.CalendarApi(httpClient);
+                                      await calendarApi.events
+                                          .delete('primary', event.id.toString());
+                                      setState(() {});
+                                    }
+                                  }
+
+                                  // try {
+                                  //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                                  //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                                  //   // Delete the event.
+                                  //   await calendarApi.events.delete('primary', details..resource.id);
+                                  //   print('Event deleted successfully');
+                                  // } catch (e) {
+                                  //   print('Error deleting event: $e');
+                                  // } finally {
+                                  //   // Close the client to release resources.
+                                  //   client.close();
+                                  // }
+
+                                  if (details.targetElement ==
+                                      CalendarElement.appointment) {
+                                    // An event is tapped
+                                    print(
+                                        'Event tapped: ${details.appointments![0].subject}');
+                                    // You can perform actions here when an event is tapped
+                                  }
+                                },
+                                controller: _controller,
+                                onViewChanged: (onViewChanged) {},
+                                view: CalendarView.timelineWorkWeek,
+                                initialDisplayDate: DateTime.now(),
+                                //(2024, 1, 15, 9, 0, 0),
+                                dataSource:
+                                GoogleDataSource(events: snapshot.data),
+                                monthViewSettings: const MonthViewSettings(
+                                    appointmentDisplayMode:
+                                    MonthAppointmentDisplayMode.appointment),
+                                allowAppointmentResize: true,
+                                showDatePickerButton: false,
+                                showWeekNumber: true,
+                                showNavigationArrow: true,
+                                showCurrentTimeIndicator: true,
+                                allowViewNavigation: false,
+                                allowDragAndDrop: true,
+                              )),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                )),
+            Visibility(
+                visible: calendarType[selectIndex] == CalendarView.schedule,
+                child: Expanded(
+                  child: StreamBuilder(
+                    stream: getGoogleEventsData(),
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      return Stack(
+                        children: [
+                          SfCalendar(
+                            onTap: (CalendarTapDetails details) async {
+                              // details.appointments!.map((e) => log('On Tap --> ${e.first}')).toList();
+                              if (details.appointments != null &&
+                                  details.appointments!.isNotEmpty) {
+                                for (int i = 0;
+                                i < details.appointments!.length;
+                                i++) {
+                                  final GoogleAPI.Event event =
+                                  details.appointments![i];
+                                  log('Cal Event ---> ${event.description} .. ${event.status}');
+
+                                  final GoogleAPIClient httpClient =
+                                  GoogleAPIClient(
+                                      await _currentUser!.authHeaders);
+                                  final GoogleAPI.CalendarApi calendarApi =
+                                  GoogleAPI.CalendarApi(httpClient);
+                                  await calendarApi.events
+                                      .delete('primary', event.id.toString());
+                                  setState(() {});
+                                }
+                              }
+
+                              // try {
+                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
+                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   // Delete the event.
+                              //   await calendarApi.events.delete('primary', details..resource.id);
+                              //   print('Event deleted successfully');
+                              // } catch (e) {
+                              //   print('Error deleting event: $e');
+                              // } finally {
+                              //   // Close the client to release resources.
+                              //   client.close();
+                              // }
+
+                              if (details.targetElement ==
+                                  CalendarElement.appointment) {
+                                // An event is tapped
+                                print(
+                                    'Event tapped: ${details.appointments![0].subject}');
+                                // You can perform actions here when an event is tapped
+                              }
+                            },
+                            controller: _controller,
+                            onViewChanged: (onViewChanged) {},
+                            view: CalendarView.schedule,
+                            initialDisplayDate: DateTime.now(),
+                            //(2024, 1, 15, 9, 0, 0),
+                            dataSource:
+                            GoogleDataSource(events: snapshot.data),
+                            monthViewSettings: const MonthViewSettings(
+                                appointmentDisplayMode:
+                                MonthAppointmentDisplayMode.appointment),
+                            allowAppointmentResize: true,
+                            showDatePickerButton: false,
+                            showWeekNumber: true,
+                            showNavigationArrow: true,
+                            showCurrentTimeIndicator: true,
+                            allowViewNavigation: false,
+                            allowDragAndDrop: true,
+                          ),
+                          snapshot.data != null
+                              ? Container()
+                              : const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                )),
+          ])),
+      floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final GoogleAPIClient httpClient =
+                GoogleAPIClient(await _currentUser!.authHeaders);
+            final GoogleAPI.CalendarApi calendarApi =
+                GoogleAPI.CalendarApi(httpClient);
+            var event = GoogleAPI.Event()
+                  ..summary = 'Event Summary New '
+                  ..description = 'Event Description New'
+                  ..start = GoogleAPI.EventDateTime(
+                      dateTime:
+                          DateTime.now().subtract(const Duration(days: 1)),
+                      timeZone: 'GMT')
+                  // ..dateTime = DateTime.now().add(Duration(days: 1))
+                  // ..timeZone = 'GMT'
+                  ..end = GoogleAPI.EventDateTime(
+                      dateTime:
+                          DateTime.now().add(const Duration(days: 1, hours: 1)),
+                      timeZone: 'GMT')
+                // ..dateTime = DateTime.now().add(Duration(days: 1, hours: 1))
+                // ..timeZone = 'GMT'
+                ;
+
+            var calendarId =
+                'primary'; // Use 'primary' for the user's primary calendar
+            final status = await calendarApi.events.insert(event, calendarId);
+            setState(() {});
+            print('Add Event Status --> ${status.description}');
+          },
+          label: const Text('Add Event',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20))),
     );
   }
 
@@ -501,8 +1193,8 @@ class MapScreenState extends State<MapScreen> {
     locationStreamSubscription =
         StreamLocationService.onLocationChanged?.listen(
       (position) async {
-        print('Position ---> ${position}');
-        log_print.log('Position ---> ${position}');
+        print('Position ---> $position');
+        log_print.log('Position ---> $position');
         await FirestoreService.updateUserLocation(
           'sQkWMX9usjO8HbI2VQCF',
           //Hardcoded uid but this is the uid of the connected user when using authentification service
@@ -657,9 +1349,9 @@ class MapScreenState extends State<MapScreen> {
                     data[i + 1].location!.lat, data[i + 1].location!.lng),
             travelMode: TravelMode.driving);
 
-        data1.points.forEach((PointLatLng point) {
+        for (var point in data1.points) {
           polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-        });
+        }
 
         Polyline polyline = Polyline(
             polylineId: id,
@@ -688,7 +1380,7 @@ class MapScreenState extends State<MapScreen> {
         //
         // int speed=30;
         // float time = distance/speed;
-        log_print.log('distanceInMeters --- > ${totalDistance}');
+        log_print.log('distanceInMeters --- > $totalDistance');
         markers.add(
           Marker(
             draggable: true,
