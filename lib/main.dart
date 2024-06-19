@@ -17,7 +17,7 @@ import 'firestore_service.dart';
 
 //google event
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleapis/calendar/v3.dart' as GoogleAPI;
+import 'package:googleapis/calendar/v3.dart' as google_api;
 import 'package:http/io_client.dart' show IOClient, IOStreamedResponse;
 import 'package:http/http.dart' show BaseRequest, Response;
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -252,7 +252,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     // clientId: '[501041666177-j3eunanijg6a52jvk5qmjfc44r89at9m.apps.googleusercontent.com]',
-    scopes: <String>[GoogleAPI.CalendarApi.calendarScope],
+    scopes: <String>[google_api.CalendarApi.calendarScope],
     forceCodeForRefreshToken: true,
   );
 
@@ -288,23 +288,23 @@ class _MyHomePageState extends State<MyHomePage> {
     _googleSignIn.signInSilently();
   }
 
-  Stream<List<GoogleAPI.Event>> getGoogleEventsData() async* {
-    final List<GoogleAPI.Event> appointments = <GoogleAPI.Event>[];
+  Stream<List<google_api.Event>> getGoogleEventsData() async* {
+    final List<google_api.Event> appointments = <google_api.Event>[];
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       log('googleUser ---> ${googleUser?.email}');
       final GoogleAPIClient httpClient =
           GoogleAPIClient(await googleUser!.authHeaders);
 
-      final GoogleAPI.CalendarApi calendarApi =
-          GoogleAPI.CalendarApi(httpClient);
-      final GoogleAPI.Events calEvents = await calendarApi.events.list(
+      final google_api.CalendarApi calendarApi =
+          google_api.CalendarApi(httpClient);
+      final google_api.Events calEvents = await calendarApi.events.list(
         "primary",
       );
 
       if (calEvents.items != null) {
         for (int i = 0; i < calEvents.items!.length; i++) {
-          final GoogleAPI.Event event = calEvents.items![i];
+          final google_api.Event event = calEvents.items![i];
           if (event.start == null) {
             continue;
           }
@@ -321,7 +321,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    print('calendarType[selectIndex] ---> ${calendarType[selectIndex]}');
+    log('calendarType[selectIndex] ---> ${calendarType[selectIndex]}');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Event Calendar'),
@@ -364,28 +364,28 @@ class _MyHomePageState extends State<MyHomePage> {
                               for (int i = 0;
                               i < details.appointments!.length;
                               i++) {
-                                final GoogleAPI.Event event =
+                                final google_api.Event event =
                                 details.appointments![i];
                                 log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                 final GoogleAPIClient httpClient =
                                 GoogleAPIClient(
                                     await _currentUser!.authHeaders);
-                                final GoogleAPI.CalendarApi calendarApi =
-                                GoogleAPI.CalendarApi(httpClient);
+                                final google_api.CalendarApi calendarApi =
+                                google_api.CalendarApi(httpClient);
                                 await calendarApi.events
                                     .delete('primary', event.id.toString());
                                 setState(() {});
                               }
 
                               // try {
-                              //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   final google_apiClient httpClient = google_apiClient(await _currentUser!.authHeaders);
+                              //   final google_api.CalendarApi calendarApi = google_api.CalendarApi(httpClient);
                               //   // Delete the event.
                               //   await calendarApi.events.delete('primary', details..resource.id);
-                              //   print('Event deleted successfully');
+                              //   log('Event deleted successfully');
                               // } catch (e) {
-                              //   print('Error deleting event: $e');
+                              //   log('Error deleting event: $e');
                               // } finally {
                               //   // Close the client to release resources.
                               //   client.close();
@@ -394,7 +394,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (details.targetElement ==
                                   CalendarElement.appointment) {
                                 // An event is tapped
-                                print(
+                                log(
                                     'Event tapped: ${details.appointments![0].subject}');
                                 // You can perform actions here when an event is tapped
                               }
@@ -442,15 +442,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                 for (int i = 0;
                                 i < details.appointments!.length;
                                 i++) {
-                                  final GoogleAPI.Event event =
+                                  final google_api.Event event =
                                   details.appointments![i];
                                   log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                   final GoogleAPIClient httpClient =
                                   GoogleAPIClient(
                                       await _currentUser!.authHeaders);
-                                  final GoogleAPI.CalendarApi calendarApi =
-                                  GoogleAPI.CalendarApi(httpClient);
+                                  final google_api.CalendarApi calendarApi =
+                                  google_api.CalendarApi(httpClient);
                                   await calendarApi.events
                                       .delete('primary', event.id.toString());
                                   setState(() {});
@@ -462,9 +462,9 @@ class _MyHomePageState extends State<MyHomePage> {
                               //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
                               //   // Delete the event.
                               //   await calendarApi.events.delete('primary', details..resource.id);
-                              //   print('Event deleted successfully');
+                              //   log('Event deleted successfully');
                               // } catch (e) {
-                              //   print('Error deleting event: $e');
+                              //   log('Error deleting event: $e');
                               // } finally {
                               //   // Close the client to release resources.
                               //   client.close();
@@ -473,7 +473,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (details.targetElement ==
                                   CalendarElement.appointment) {
                                 // An event is tapped
-                                print(
+                                log(
                                     'Event tapped: ${details.appointments![0].subject}');
                                 // You can perform actions here when an event is tapped
                               }
@@ -520,15 +520,15 @@ class _MyHomePageState extends State<MyHomePage> {
                               for (int i = 0;
                               i < details.appointments!.length;
                               i++) {
-                                final GoogleAPI.Event event =
+                                final google_api.Event event =
                                 details.appointments![i];
                                 log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                 final GoogleAPIClient httpClient =
                                 GoogleAPIClient(
                                     await _currentUser!.authHeaders);
-                                final GoogleAPI.CalendarApi calendarApi =
-                                GoogleAPI.CalendarApi(httpClient);
+                                final google_api.CalendarApi calendarApi =
+                                google_api.CalendarApi(httpClient);
                                 await calendarApi.events
                                     .delete('primary', event.id.toString());
                                 setState(() {});
@@ -536,12 +536,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
                               // try {
                               //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   final google_api.CalendarApi calendarApi = google_api.CalendarApi(httpClient);
                               //   // Delete the event.
                               //   await calendarApi.events.delete('primary', details..resource.id);
-                              //   print('Event deleted successfully');
+                              //   log('Event deleted successfully');
                               // } catch (e) {
-                              //   print('Error deleting event: $e');
+                              //   log('Error deleting event: $e');
                               // } finally {
                               //   // Close the client to release resources.
                               //   client.close();
@@ -550,7 +550,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (details.targetElement ==
                                   CalendarElement.appointment) {
                                 // An event is tapped
-                                print(
+                                log(
                                     'Event tapped: ${details.appointments![0].subject}');
                                 // You can perform actions here when an event is tapped
                               }
@@ -597,15 +597,15 @@ class _MyHomePageState extends State<MyHomePage> {
                               for (int i = 0;
                               i < details.appointments!.length;
                               i++) {
-                                final GoogleAPI.Event event =
+                                final google_api.Event event =
                                 details.appointments![i];
                                 log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                 final GoogleAPIClient httpClient =
                                 GoogleAPIClient(
                                     await _currentUser!.authHeaders);
-                                final GoogleAPI.CalendarApi calendarApi =
-                                GoogleAPI.CalendarApi(httpClient);
+                                final google_api.CalendarApi calendarApi =
+                                google_api.CalendarApi(httpClient);
                                 await calendarApi.events
                                     .delete('primary', event.id.toString());
                                 setState(() {});
@@ -613,12 +613,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
                               // try {
                               //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   final google_api.CalendarApi calendarApi = google_api.CalendarApi(httpClient);
                               //   // Delete the event.
                               //   await calendarApi.events.delete('primary', details..resource.id);
-                              //   print('Event deleted successfully');
+                              //   log('Event deleted successfully');
                               // } catch (e) {
-                              //   print('Error deleting event: $e');
+                              //   log('Error deleting event: $e');
                               // } finally {
                               //   // Close the client to release resources.
                               //   client.close();
@@ -627,7 +627,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (details.targetElement ==
                                   CalendarElement.appointment) {
                                 // An event is tapped
-                                print(
+                                log(
                                     'Event tapped: ${details.appointments![0].subject}');
                                 // You can perform actions here when an event is tapped
                               }
@@ -673,15 +673,15 @@ class _MyHomePageState extends State<MyHomePage> {
                               for (int i = 0;
                               i < details.appointments!.length;
                               i++) {
-                                final GoogleAPI.Event event =
+                                final google_api.Event event =
                                 details.appointments![i];
                                 log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                 final GoogleAPIClient httpClient =
                                 GoogleAPIClient(
                                     await _currentUser!.authHeaders);
-                                final GoogleAPI.CalendarApi calendarApi =
-                                GoogleAPI.CalendarApi(httpClient);
+                                final google_api.CalendarApi calendarApi =
+                                google_api.CalendarApi(httpClient);
                                 await calendarApi.events
                                     .delete('primary', event.id.toString());
                                 setState(() {});
@@ -690,12 +690,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
                             // try {
                             //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                            //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                            //   final google_api.CalendarApi calendarApi = google_api.CalendarApi(httpClient);
                             //   // Delete the event.
                             //   await calendarApi.events.delete('primary', details..resource.id);
-                            //   print('Event deleted successfully');
+                            //   log('Event deleted successfully');
                             // } catch (e) {
-                            //   print('Error deleting event: $e');
+                            //   log('Error deleting event: $e');
                             // } finally {
                             //   // Close the client to release resources.
                             //   client.close();
@@ -704,7 +704,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             if (details.targetElement ==
                                 CalendarElement.appointment) {
                               // An event is tapped
-                              print(
+                              log(
                                   'Event tapped: ${details.appointments![0].subject}');
                               // You can perform actions here when an event is tapped
                             }
@@ -750,15 +750,15 @@ class _MyHomePageState extends State<MyHomePage> {
                               for (int i = 0;
                               i < details.appointments!.length;
                               i++) {
-                                final GoogleAPI.Event event =
+                                final google_api.Event event =
                                 details.appointments![i];
                                 log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                 final GoogleAPIClient httpClient =
                                 GoogleAPIClient(
                                     await _currentUser!.authHeaders);
-                                final GoogleAPI.CalendarApi calendarApi =
-                                GoogleAPI.CalendarApi(httpClient);
+                                final google_api.CalendarApi calendarApi =
+                                google_api.CalendarApi(httpClient);
                                 await calendarApi.events
                                     .delete('primary', event.id.toString());
                                 setState(() {});
@@ -766,12 +766,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
                               // try {
                               //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   final google_api.CalendarApi calendarApi = google_api.CalendarApi(httpClient);
                               //   // Delete the event.
                               //   await calendarApi.events.delete('primary', details..resource.id);
-                              //   print('Event deleted successfully');
+                              //   log('Event deleted successfully');
                               // } catch (e) {
-                              //   print('Error deleting event: $e');
+                              //   log('Error deleting event: $e');
                               // } finally {
                               //   // Close the client to release resources.
                               //   client.close();
@@ -780,7 +780,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (details.targetElement ==
                                   CalendarElement.appointment) {
                                 // An event is tapped
-                                print(
+                                log(
                                     'Event tapped: ${details.appointments![0].subject}');
                                 // You can perform actions here when an event is tapped
                               }
@@ -829,15 +829,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                 for (int i = 0;
                                 i < details.appointments!.length;
                                 i++) {
-                                  final GoogleAPI.Event event =
+                                  final google_api.Event event =
                                   details.appointments![i];
                                   log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                   final GoogleAPIClient httpClient =
                                   GoogleAPIClient(
                                       await _currentUser!.authHeaders);
-                                  final GoogleAPI.CalendarApi calendarApi =
-                                  GoogleAPI.CalendarApi(httpClient);
+                                  final google_api.CalendarApi calendarApi =
+                                  google_api.CalendarApi(httpClient);
                                   await calendarApi.events
                                       .delete('primary', event.id.toString());
                                   setState(() {});
@@ -849,9 +849,9 @@ class _MyHomePageState extends State<MyHomePage> {
                               //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
                               //   // Delete the event.
                               //   await calendarApi.events.delete('primary', details..resource.id);
-                              //   print('Event deleted successfully');
+                              //   log('Event deleted successfully');
                               // } catch (e) {
-                              //   print('Error deleting event: $e');
+                              //   log('Error deleting event: $e');
                               // } finally {
                               //   // Close the client to release resources.
                               //   client.close();
@@ -860,7 +860,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (details.targetElement ==
                                   CalendarElement.appointment) {
                                 // An event is tapped
-                                print(
+                                log(
                                     'Event tapped: ${details.appointments![0].subject}');
                                 // You can perform actions here when an event is tapped
                               }
@@ -912,15 +912,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                     for (int i = 0;
                                     i < details.appointments!.length;
                                     i++) {
-                                      final GoogleAPI.Event event =
+                                      final google_api.Event event =
                                       details.appointments![i];
                                       log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                       final GoogleAPIClient httpClient =
                                       GoogleAPIClient(
                                           await _currentUser!.authHeaders);
-                                      final GoogleAPI.CalendarApi calendarApi =
-                                      GoogleAPI.CalendarApi(httpClient);
+                                      final google_api.CalendarApi calendarApi =
+                                      google_api.CalendarApi(httpClient);
                                       await calendarApi.events
                                           .delete('primary', event.id.toString());
                                       setState(() {});
@@ -928,13 +928,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                   }
 
                                   // try {
-                                  //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                                  //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                                  //   final GoogleAPIClient httpClient = google_apiClient(await _currentUser!.authHeaders);
+                                  //   final google_api.CalendarApi calendarApi = google_api.CalendarApi(httpClient);
                                   //   // Delete the event.
                                   //   await calendarApi.events.delete('primary', details..resource.id);
-                                  //   print('Event deleted successfully');
+                                  //   log('Event deleted successfully');
                                   // } catch (e) {
-                                  //   print('Error deleting event: $e');
+                                  //   log('Error deleting event: $e');
                                   // } finally {
                                   //   // Close the client to release resources.
                                   //   client.close();
@@ -943,7 +943,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   if (details.targetElement ==
                                       CalendarElement.appointment) {
                                     // An event is tapped
-                                    print(
+                                    log(
                                         'Event tapped: ${details.appointments![0].subject}');
                                     // You can perform actions here when an event is tapped
                                   }
@@ -992,15 +992,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                 for (int i = 0;
                                 i < details.appointments!.length;
                                 i++) {
-                                  final GoogleAPI.Event event =
+                                  final google_api.Event event =
                                   details.appointments![i];
                                   log('Cal Event ---> ${event.description} .. ${event.status}');
 
                                   final GoogleAPIClient httpClient =
                                   GoogleAPIClient(
                                       await _currentUser!.authHeaders);
-                                  final GoogleAPI.CalendarApi calendarApi =
-                                  GoogleAPI.CalendarApi(httpClient);
+                                  final google_api.CalendarApi calendarApi =
+                                  google_api.CalendarApi(httpClient);
                                   await calendarApi.events
                                       .delete('primary', event.id.toString());
                                   setState(() {});
@@ -1009,12 +1009,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
                               // try {
                               //   final GoogleAPIClient httpClient = GoogleAPIClient(await _currentUser!.authHeaders);
-                              //   final GoogleAPI.CalendarApi calendarApi = GoogleAPI.CalendarApi(httpClient);
+                              //   final google_api.CalendarApi calendarApi = google_api.CalendarApi(httpClient);
                               //   // Delete the event.
                               //   await calendarApi.events.delete('primary', details..resource.id);
-                              //   print('Event deleted successfully');
+                              //   log('Event deleted successfully');
                               // } catch (e) {
-                              //   print('Error deleting event: $e');
+                              //   log('Error deleting event: $e');
                               // } finally {
                               //   // Close the client to release resources.
                               //   client.close();
@@ -1023,7 +1023,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (details.targetElement ==
                                   CalendarElement.appointment) {
                                 // An event is tapped
-                                print(
+                                log(
                                     'Event tapped: ${details.appointments![0].subject}');
                                 // You can perform actions here when an event is tapped
                               }
@@ -1061,18 +1061,18 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: () async {
             final GoogleAPIClient httpClient =
                 GoogleAPIClient(await _currentUser!.authHeaders);
-            final GoogleAPI.CalendarApi calendarApi =
-                GoogleAPI.CalendarApi(httpClient);
-            var event = GoogleAPI.Event()
+            final google_api.CalendarApi calendarApi =
+            google_api.CalendarApi(httpClient);
+            var event = google_api.Event()
                   ..summary = 'Event Summary New '
                   ..description = 'Event Description New'
-                  ..start = GoogleAPI.EventDateTime(
+                  ..start = google_api.EventDateTime(
                       dateTime:
                           DateTime.now().subtract(const Duration(days: 1)),
                       timeZone: 'GMT')
                   // ..dateTime = DateTime.now().add(Duration(days: 1))
                   // ..timeZone = 'GMT'
-                  ..end = GoogleAPI.EventDateTime(
+                  ..end = google_api.EventDateTime(
                       dateTime:
                           DateTime.now().add(const Duration(days: 1, hours: 1)),
                       timeZone: 'GMT')
@@ -1084,7 +1084,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 'primary'; // Use 'primary' for the user's primary calendar
             final status = await calendarApi.events.insert(event, calendarId);
             setState(() {});
-            print('Add Event Status --> ${status.description}');
+            log('Add Event Status --> ${status.description}');
           },
           label: const Text('Add Event',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20))),
@@ -1103,13 +1103,13 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class GoogleDataSource extends CalendarDataSource {
-  GoogleDataSource({required List<GoogleAPI.Event>? events}) {
+  GoogleDataSource({required List<google_api.Event>? events}) {
     appointments = events;
   }
 
   @override
   DateTime getStartTime(int index) {
-    final GoogleAPI.Event event = appointments![index];
+    final google_api.Event event = appointments![index];
     return event.start?.date ?? event.start!.dateTime!.toLocal();
   }
 
@@ -1120,7 +1120,7 @@ class GoogleDataSource extends CalendarDataSource {
 
   @override
   DateTime getEndTime(int index) {
-    final GoogleAPI.Event event = appointments![index];
+    final google_api.Event event = appointments![index];
     return event.endTimeUnspecified != null && event.endTimeUnspecified!
         ? (event.start?.date ?? event.start!.dateTime!.toLocal())
         : (event.end?.date != null
@@ -1140,7 +1140,7 @@ class GoogleDataSource extends CalendarDataSource {
 
   @override
   String getSubject(int index) {
-    final GoogleAPI.Event event = appointments![index];
+    final google_api.Event event = appointments![index];
     return event.summary == null || event.summary!.isEmpty
         ? 'No Title'
         : event.summary!;
@@ -1193,8 +1193,8 @@ class MapScreenState extends State<MapScreen> {
     locationStreamSubscription =
         StreamLocationService.onLocationChanged?.listen(
       (position) async {
-        print('Position ---> $position');
-        log_print.log('Position ---> $position');
+        log('Position ---> $position');
+        log('Position ---> $position');
         await FirestoreService.updateUserLocation(
           'sQkWMX9usjO8HbI2VQCF',
           //Hardcoded uid but this is the uid of the connected user when using authentification service
@@ -1202,7 +1202,7 @@ class MapScreenState extends State<MapScreen> {
         );
       },
     );
-    print('Position --->');
+    log('Position --->');
     // setState(() {});
   }
 
@@ -1219,7 +1219,7 @@ class MapScreenState extends State<MapScreen> {
         storageBucket: "loyalty-app-ec079.appspot.com",
       ));
     } catch (e) {
-      log_print.log('Firebase Catch --- ${e.toString()}');
+      log('Firebase Catch --- ${e.toString()}');
     }
   }
 
@@ -1332,7 +1332,7 @@ class MapScreenState extends State<MapScreen> {
 
     for (var i = 0; i < data!.length; i++) {
       try {
-        print(
+        log(
             'Loop Calling....Len ${data.length} --- ${data.length - 1 == i}... ${data[i].name}  ${data[i].location?.lng}');
         final user = data[i];
         PolylineId id = const PolylineId("poly");
@@ -1380,7 +1380,7 @@ class MapScreenState extends State<MapScreen> {
         //
         // int speed=30;
         // float time = distance/speed;
-        log_print.log('distanceInMeters --- > $totalDistance');
+        log('distanceInMeters --- > $totalDistance');
         markers.add(
           Marker(
             draggable: true,
@@ -1395,11 +1395,11 @@ class MapScreenState extends State<MapScreen> {
                 : BitmapDescriptor.defaultMarkerWithHue(
                     BitmapDescriptor.hueYellow),
             position: LatLng(user.location!.lat, user.location!.lng),
-            onTap: () => {print("Marker Click --- > ")},
+            onTap: () => {log("Marker Click --- > ")},
           ),
         );
       } catch (e) {
-        print('Loop Calling.... Catch --- > ${e.toString()}');
+        log('Loop Calling.... Catch --- > ${e.toString()}');
       }
     }
     return 1;
@@ -1415,16 +1415,17 @@ class MapScreenState extends State<MapScreen> {
   }
 }
 
+// ignore: must_be_immutable
 class BottomSheetWidget extends StatefulWidget {
   BuildContext context;
 
   BottomSheetWidget(this.context, {super.key});
 
   @override
-  _BottomSheetWidgetState createState() => _BottomSheetWidgetState();
+  BottomSheetWidgetState createState() => BottomSheetWidgetState();
 }
 
-class _BottomSheetWidgetState extends State<BottomSheetWidget>
+class BottomSheetWidgetState extends State<BottomSheetWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
